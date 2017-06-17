@@ -6,6 +6,7 @@ package dbProject;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,14 +67,39 @@ public class DBUtils {
             return null;
         }
     }
+    public static List<String> showColunmsNames(String ip,String database,String username,String password,String table) throws SQLException {
+        if(ConnectToDatebase(ip,database,username,password)){
+            List<String> list = new ArrayList<>();
+            String sql = "select * from " + table;
+            Statement statement = (Statement) connection.createStatement();
+            resultSet = statement.executeQuery(sql);
+            for(int i = 1;i<resultSet.getMetaData().getColumnCount()+1;i++){
+                list.add(resultSet.getMetaData().getColumnName(i));
+            }
+            return list;
+        }
+        return null;
+    }
+    public static Boolean Insert(String ip,String database,String username,String password,String table,String sql) throws SQLException {
+        if(ConnectToDatebase(ip,database,username,password)) {
+            Statement statement = (Statement) connection.createStatement();
+            int count = statement.executeUpdate(sql);
+            if (count > 0) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        return false;
+    }
 
     public static void main(String[] args) throws Exception {
-        if(DBUtils.ConnectToDatebase("127fefefwef.0.1","Project","root","5647477230")){
-            System.out.print("yes");
-        }else{
-            System.out.print("no");
-        }
-//        List<String> table_list = DBUtils.showTablesData("CUSTOMER");
+//        if(DBUtils.ConnectToDatebase("127fefefwef.0.1","Project","root","5647477230")){
+//            System.out.print("yes");
+//        }else{
+//            System.out.print("no");
+//        }
+//        List<String> table_list = DBUtils.showColunmsNames("127.0.0.1","Project","root","5647477230","LINEITEM");
 //        for(int i = 0;i<table_list.size();i++){
 //            System.out.println(table_list.get(i));
 //        }
@@ -83,5 +109,11 @@ public class DBUtils {
 //                System.out.println(s[i]);
 //            }
 //        }
+        if(Insert("localhost","Project","root","5647477230","NATION",
+                "insert into NATION values (26,'1','1','2')")){
+            System.out.println("yes");
+        }else {
+            System.out.println("no");
+        }
     }
 }
