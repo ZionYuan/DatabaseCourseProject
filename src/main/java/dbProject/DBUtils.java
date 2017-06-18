@@ -17,17 +17,14 @@ import com.sun.xml.internal.fastinfoset.util.StringArray;
 
 public class DBUtils {
     private static Connection connection= null;
-    private static PreparedStatement preparedStatement = null;
     private static ResultSet resultSet = null;
 
     private static final String urlFrontHalf="jdbc:mysql://";
-    private String username;
-    private String password;
 
     public static Boolean ConnectToDatebase(String ip,String database,String username,String password) {
         try {
             Class.forName("com.mysql.jdbc.Driver");
-            connection = (Connection) DriverManager.getConnection(urlFrontHalf+ip+"/"+database,username,password);
+            connection = (Connection) DriverManager.getConnection(urlFrontHalf+ip+"/"+database+"?autoReconnect=true&useSSL=false",username,password);
             return true;
         } catch (Exception e) {
             // TODO Auto-generated catch block
