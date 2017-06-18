@@ -48,19 +48,41 @@ public class DBUtils {
         }
         return null;
     }
-    public static List<String[]> showTablesData(String ip,String database,String username,String password,String table) throws Exception {
+    public static List<String[]> showTablesData(String ip,String database,String username,String password,String table,int linenumbers) throws Exception {
         if(ConnectToDatebase(ip,database,username,password)) {
             List<String[]> tables_data_list = new ArrayList<>();
+//            tables_data_list.add(showColunmsNames(ip,database,username,password,table));
+            List<String> list = showColunmsNames(ip,database,username,password,table);
+            String[] ss = new String[list.size()];
+            for(int i =0;i<list.size();i++){
+                ss[i] = list.get(i);
+            }
+            tables_data_list.add(ss);
+
             String sql = "select * from " + table;
             Statement statement = (Statement) connection.createStatement();
             resultSet = statement.executeQuery(sql);
             int columCounts = resultSet.getMetaData().getColumnCount();
-            while (resultSet.next()) {
-                String[] a = new String[columCounts];
-                for (int i = 0; i < columCounts; i++) {
-                    a[i] = resultSet.getString(i + 1);
+            int line = 0;
+            if(linenumbers == -1){
+                while (resultSet.next()) {
+                    String[] a = new String[columCounts];
+                    for (int i = 0; i < columCounts; i++) {
+                        a[i] = resultSet.getString(i + 1);
+                    }
+                    tables_data_list.add(a);
+                    line++;
                 }
-                tables_data_list.add(a);
+            }else {
+                resultSet.beforeFirst();
+                while (resultSet.next() && line < linenumbers) {
+                    String[] a = new String[columCounts];
+                    for (int i = 0; i < columCounts; i++) {
+                        a[i] = resultSet.getString(i + 1);
+                    }
+                    tables_data_list.add(a);
+                    line++;
+                }
             }
             return tables_data_list;
         }else{
@@ -80,7 +102,7 @@ public class DBUtils {
         }
         return null;
     }
-    public static Boolean Insert(String ip,String database,String username,String password,String table,String sql) throws SQLException {
+    public static Boolean Update(String ip,String database,String username,String password,String table,String sql) throws SQLException {
         if(ConnectToDatebase(ip,database,username,password)) {
             Statement statement = (Statement) connection.createStatement();
             int count = statement.executeUpdate(sql);
@@ -103,17 +125,17 @@ public class DBUtils {
 //        for(int i = 0;i<table_list.size();i++){
 //            System.out.println(table_list.get(i));
 //        }
-//        List<String[]> list = DBUtils.showTablesData("CUSTOMER");
-//        for(String[] s : list){
-//            for(int i = 0;i< s.length;i++){
-//                System.out.println(s[i]);
-//            }
-//        }
-        if(Insert("localhost","Project","root","5647477230","NATION",
-                "insert into NATION values (26,'1','1','2')")){
-            System.out.println("yes");
-        }else {
-            System.out.println("no");
+        List<String[]> list = DBUtils.showTablesData("127.0.0.1","Project","root","5647477230","NATION",-1);
+        for(String[] s : list){
+            for(int i = 0;i< s.length;i++){
+                System.out.println(s[i]);
+            }
         }
+//        if(Update("localhost","Project","root","5647477230","NATION",
+//                "delete from NATION where N_COMMENT = '1'")){
+//            System.out.println("yes");
+//        }else {
+//            System.out.println("no");
+//        }
     }
 }

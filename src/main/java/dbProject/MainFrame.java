@@ -5,6 +5,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
@@ -18,11 +20,13 @@ public class MainFrame extends JFrame implements ActionListener {
     }
     JPanel LEFT,RIGHT;
     JPanel jp1,jp2,jp12,jp3,jp4,jp5;
-    JLabel ip,database,username,password,info,show;
-    JTextField ip_textfield,database_textfield,username_textfield,password_textfield;
+    JLabel ip,database,username,password,info,show,linenumbers;
+    JLabel tiaojian;
+    JTextField ip_textfield,database_textfield,username_textfield,password_textfield,linenumbers_textfield;
     JComboBox show_combobox;
     JButton connect,query,add,delete,hide;
-    JTextArea display;
+    JButton tj,sc,gx;
+    JTextArea display,tiaojian_textfield;
 
     public MainFrame(String title) throws Exception {
         super(title);
@@ -74,13 +78,17 @@ public class MainFrame extends JFrame implements ActionListener {
 
         jp4 = new JPanel();
         jp4.setLayout(new BoxLayout(jp4,BoxLayout.X_AXIS));
+
+        linenumbers = new JLabel("显示行数：");
+        linenumbers_textfield = new JTextField(10);
+
         query = new JButton("查看数据");
         query.addActionListener(this);
         query.setEnabled(false);
 
         add = new JButton("增加数据");
         add.addActionListener(this);
-//        add.setEnabled(false);
+        add.setEnabled(false);
 
         delete = new JButton("删除数据");
         delete.addActionListener(this);
@@ -89,7 +97,8 @@ public class MainFrame extends JFrame implements ActionListener {
         hide = new JButton("隐藏侧边框");
         hide.addActionListener(this);
 
-
+        jp4.add(linenumbers);
+        jp4.add(linenumbers_textfield);
         jp4.add(query);
         jp4.add(add);
         jp4.add(delete);
@@ -98,9 +107,12 @@ public class MainFrame extends JFrame implements ActionListener {
 
         jp5 = new JPanel();
         jp5.setLayout(new BoxLayout(jp5,BoxLayout.Y_AXIS));
-        JButton tj = new JButton("添加");
+        tj = new JButton("添加");
         RIGHT.add(tj,-1);
         tj.addActionListener(this);
+        sc = new JButton("删除");
+        RIGHT.add(sc,-1);
+        sc.addActionListener(this);
 
         LEFT.add(jp1);
         LEFT.add(jp2);
@@ -110,7 +122,7 @@ public class MainFrame extends JFrame implements ActionListener {
         RIGHT.setVisible(false);
 
 
-        display = new JTextArea(10,10);
+        display = new JTextArea(20,70);
         display.setEditable(false);
 
         //设置滚动框，并保持滚动条一直在最下面.
@@ -145,11 +157,12 @@ public class MainFrame extends JFrame implements ActionListener {
                             database_textfield.getText(),
                             username_textfield.getText(),
                             password_textfield.getText()))) {
-                        display.append("数据库连接失败！" + "\n");
+                        display.append("数据库连接失败！" + "\n=========================================");
                     }
                     else{
                         query.setEnabled(true);
                         add.setEnabled(true);
+                        delete.setEnabled(true);
                         java.util.List<String> tables_list = DBUtils.showTables(ip_textfield.getText(),
                                                                                     database_textfield.getText(),
                                                                                     username_textfield.getText(),
@@ -157,9 +170,12 @@ public class MainFrame extends JFrame implements ActionListener {
                                                                                     );
                         show_combobox.removeAllItems();
                         for (int i = 0; i < tables_list.size(); i++) {
-                        show_combobox.addItem(tables_list.get(i));
-                            }
-                        display.append("已连接数据库 "+database_textfield.getText()+"\n");
+                            show_combobox.addItem(tables_list.get(i));
+                        }
+                        Date date = new Date();
+                        DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                        String time = format.format(date);
+                        display.append("\n已连接数据库 "+database_textfield.getText()+"        "+time+"\n=========================================");
                         }
 
                 } catch (Exception e1) {
@@ -176,16 +192,29 @@ public class MainFrame extends JFrame implements ActionListener {
         }
         if(e.getActionCommand().equals("查看数据")){
             try {
-                java.util.List<String[]> list = DBUtils.showTablesData(ip_textfield.getText(),
-                                                                        database_textfield.getText(),
-                                                                        username_textfield.getText(),
-                                                                        password_textfield.getText(),
-                                                                        show_combobox.getSelectedItem().toString());
+                int linenumbers = Integer.parseInt(linenumbers_textfield.getText());
+                java.util.List<String[]> list = null;
+                if(linenumbers >= 0) {
+                    list = DBUtils.showTablesData(ip_textfield.getText(),
+                            database_textfield.getText(),
+                            username_textfield.getText(),
+                            password_textfield.getText(),
+                            show_combobox.getSelectedItem().toString(),
+                            linenumbers);
+                }else{
+                    list = DBUtils.showTablesData(ip_textfield.getText(),
+                            database_textfield.getText(),
+                            username_textfield.getText(),
+                            password_textfield.getText(),
+                            show_combobox.getSelectedItem().toString(),
+                            -1);
+                }
+                display.append("\n=========================================\n");
                 for(String[] s : list){
                     for(int i = 0;i< s.length;i++){
                         display.append(s[i]+"      ");
                     }
-                    display.append("\n"+"\n");
+                    display.append("\n");
                 }
             } catch (Exception e1) {
                 e1.printStackTrace();
@@ -196,6 +225,8 @@ public class MainFrame extends JFrame implements ActionListener {
         int y = 500;
         if(e.getActionCommand().equals("增加数据")){
             RIGHT.setVisible(true);
+            sc.setVisible(false);
+            tj.setVisible(true);
             jp5.removeAll();
 //            jp5 = new JPanel();
 //            jp5.setLayout(new BoxLayout(jp4,BoxLayout.Y_AXIS));
@@ -244,19 +275,54 @@ public class MainFrame extends JFrame implements ActionListener {
             }
             sql = sql + ")";
             try {
-                if(DBUtils.Insert(ip_textfield.getText(),
+                if(DBUtils.Update(ip_textfield.getText(),
                         database_textfield.getText(),
                         username_textfield.getText(),
                         password_textfield.getText(),
                         show_combobox.getSelectedItem().toString(),
                         sql)){
-                    display.append("\n"+"插入成功");
+                    display.append("\n=========================================\n插入成功\n=========================================\n");
+                }
+                else{
+                    display.append("\n=========================================\n插入失败\n=========================================\n");
                 }
             } catch (SQLException e1) {
                 display.append("\n============EXCEPTION=========================\n"+e1.toString()+"\n============EXCEPTION=========================\n");
 
             }
             /**插入数据*/
+        }
+        if (e.getActionCommand().equals("删除数据")){
+            RIGHT.setVisible(true);
+            sc.setVisible(true);
+            tj.setVisible(false);
+            jp5.removeAll();
+            tiaojian = new JLabel("删除条件");
+            tiaojian_textfield = new JTextArea();
+            tiaojian_textfield.setLineWrap(true);
+            jp5.add(tiaojian);
+            jp5.add(tiaojian_textfield);
+
+        }
+        if(e.getActionCommand().equals("删除")){
+            String sql;
+            sql = "delete from "+show_combobox.getSelectedItem().toString()+" where "+tiaojian_textfield.getText();
+            try {
+                if(DBUtils.Update(ip_textfield.getText(),
+                        database_textfield.getText(),
+                        username_textfield.getText(),
+                        password_textfield.getText(),
+                        show_combobox.getSelectedItem().toString(),
+                        sql)){
+                    display.append("\n=========================================\n删除成功\n=========================================\n");
+                }
+                else{
+                    display.append("\n=========================================\n删除失败,未找到数据或其他错误\n=========================================\n");
+                }
+            } catch (SQLException e1) {
+                display.append("\n============EXCEPTION=========================\n"+e1.toString()+"\n============EXCEPTION=========================\n");
+
+            }
         }
     }
 }
