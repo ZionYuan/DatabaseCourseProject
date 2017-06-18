@@ -48,7 +48,7 @@ public class DBUtils {
         }
         return null;
     }
-    public static List<String[]> showTablesData(String ip,String database,String username,String password,String table,int linenumbers) throws Exception {
+    public static List<String[]> showTablesData(String ip,String database,String username,String password,String table,int linenumbers,String sql) throws Exception {
         if(ConnectToDatebase(ip,database,username,password)) {
             List<String[]> tables_data_list = new ArrayList<>();
 //            tables_data_list.add(showColunmsNames(ip,database,username,password,table));
@@ -59,7 +59,6 @@ public class DBUtils {
             }
             tables_data_list.add(ss);
 
-            String sql = "select * from " + table;
             Statement statement = (Statement) connection.createStatement();
             resultSet = statement.executeQuery(sql);
             int columCounts = resultSet.getMetaData().getColumnCount();
@@ -125,17 +124,16 @@ public class DBUtils {
 //        for(int i = 0;i<table_list.size();i++){
 //            System.out.println(table_list.get(i));
 //        }
-        List<String[]> list = DBUtils.showTablesData("127.0.0.1","Project","root","5647477230","NATION",-1);
-        for(String[] s : list){
-            for(int i = 0;i< s.length;i++){
-                System.out.println(s[i]);
-            }
-        }
-//        if(Update("localhost","Project","root","5647477230","NATION",
-//                "delete from NATION where N_COMMENT = '1'")){
-//            System.out.println("yes");
-//        }else {
-//            System.out.println("no");
+//        List<String[]> list = DBUtils.showTablesData("127.0.0.1","Project","root","5647477230","NATION",-1,"update REGION set R_NAME = '00' where R_REGIONKEY = '122'");
+//        for(String[] s : list){
+//            for(int i = 0;i< s.length;i++){
+//                System.out.println(s[i]);
+//            }
 //        }
+        if(Update("127.0.0.1","Project","root","5647477230","NATION","update REGION set R_NAME = '10',R_COMMENT = '00' where R_REGIONKEY = '122'")){
+            System.out.println("yes");
+        }else {
+            System.out.println("no");
+        }
     }
 }
