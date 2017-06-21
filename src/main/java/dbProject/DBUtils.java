@@ -32,8 +32,7 @@ public class DBUtils {
         }
 
     }
-    public static List<String> showTables(String ip,String database,String username,String password) throws Exception {
-        if(ConnectToDatebase(ip,database,username,password)) {
+    public static List<String> showTables() throws Exception {
             String sql = "show tables";
             Statement statement = (Statement) connection.createStatement();
             resultSet = statement.executeQuery(sql);
@@ -41,15 +40,12 @@ public class DBUtils {
             while (resultSet.next()) {
                 tables_list.add(resultSet.getString(1));
             }
+            statement.close();
             return tables_list;
-        }
-        return null;
     }
-    public static List<String[]> showTablesData(String ip,String database,String username,String password,String table,int linenumbers,String sql) throws Exception {
-        if(ConnectToDatebase(ip,database,username,password)) {
+    public static List<String[]> showTablesData(String table,int linenumbers,String sql) throws Exception {
             List<String[]> tables_data_list = new ArrayList<>();
-//            tables_data_list.add(showColunmsNames(ip,database,username,password,table));
-            List<String> list = showColunmsNames(ip,database,username,password,table);
+            List<String> list = showColunmsNames(table);
             String[] ss = new String[list.size()];
             for(int i =0;i<list.size();i++){
                 ss[i] = list.get(i);
@@ -59,17 +55,17 @@ public class DBUtils {
             Statement statement = (Statement) connection.createStatement();
             resultSet = statement.executeQuery(sql);
             int columCounts = resultSet.getMetaData().getColumnCount();
-            int line = 0;
-            if(linenumbers == -1){
+
+            if(linenumbers == 0){
                 while (resultSet.next()) {
                     String[] a = new String[columCounts];
                     for (int i = 0; i < columCounts; i++) {
                         a[i] = resultSet.getString(i + 1);
                     }
                     tables_data_list.add(a);
-                    line++;
                 }
-            }else {
+            }else if(linenumbers > 0){
+                int line = 0;
                 resultSet.beforeFirst();
                 while (resultSet.next() && line < linenumbers) {
                     String[] a = new String[columCounts];
@@ -79,14 +75,24 @@ public class DBUtils {
                     tables_data_list.add(a);
                     line++;
                 }
+            }else if(linenumbers < 0){
+                int line = 0;
+                System.out.print("111");
+                resultSet.afterLast();
+                while(resultSet.previous() && line > linenumbers){
+                    String[] a = new String[columCounts];
+                    for (int i = 0; i < columCounts; i++) {
+                        a[i] = resultSet.getString(i + 1);
+                    }
+                    tables_data_list.add(a);
+                    line--;
+                }
             }
+        statement.close();
             return tables_data_list;
-        }else{
-            return null;
-        }
+
     }
-    public static List<String> showColunmsNames(String ip,String database,String username,String password,String table) throws SQLException {
-        if(ConnectToDatebase(ip,database,username,password)){
+    public static List<String> showColunmsNames(String table) throws SQLException {
             List<String> list = new ArrayList<>();
             String sql = "select * from " + table;
             Statement statement = (Statement) connection.createStatement();
@@ -94,21 +100,24 @@ public class DBUtils {
             for(int i = 1;i<resultSet.getMetaData().getColumnCount()+1;i++){
                 list.add(resultSet.getMetaData().getColumnName(i));
             }
+        statement.close();
             return list;
-        }
-        return null;
     }
     public static Boolean Update(String ip,String database,String username,String password,String table,String sql) throws SQLException {
-        if(ConnectToDatebase(ip,database,username,password)) {
             Statement statement = (Statement) connection.createStatement();
             int count = statement.executeUpdate(sql);
             if (count > 0) {
+                statement.close();
                 return true;
             } else {
+                statement.close();
                 return false;
             }
-        }
-        return false;
+
+    }
+    public static void disconnet() throws SQLException {
+        resultSet.close();
+        connection.close();
     }
 
     public static void main(String[] args) throws Exception {

@@ -20,12 +20,12 @@ public class MainFrame extends JFrame implements ActionListener {
     }
     JPanel LEFT,RIGHT;
     JPanel jp1,jp2,jp12,jp3,jp4,jp5;
-    JLabel ip,database,username,password,info,show,linenumbers;
+    JLabel ip,database,username,password,info,show,linenumbers,fourQuery,T,S,R,D,Q;
     JLabel tiaojian;
-    JTextField ip_textfield,database_textfield,username_textfield,password_textfield,linenumbers_textfield,cx_columname,gx_content_field;
-    JComboBox show_combobox;
-    JButton connect,query,add,delete,hide,queryCondition,update;
-    JButton tj,sc,gx,cx;
+    JTextField ip_textfield,database_textfield,username_textfield,password_textfield,linenumbers_textfield,cx_columname,gx_content_field,T_textfield,S_textfield,R_textfield,D_textfield,Q_textfield;
+    JComboBox show_combobox,fourQueryCombobox;
+    JButton connect,disconnect,query,add,delete,hide,queryCondition,update;
+    JButton tj,sc,gx,cx,tscx;
     JTextArea display,tiaojian_textfield,cx_tiaojian_textarea,gx_condition_area;
 
     public MainFrame(String title) throws Exception {
@@ -55,6 +55,8 @@ public class MainFrame extends JFrame implements ActionListener {
         password = new JLabel("密码");
         password_textfield = new JTextField(10);
         connect = new JButton("连接");
+        disconnect = new JButton("断开连接");
+        disconnect.addActionListener(this);
         info = new JLabel("");
         info.setForeground(Color.red);
         info.setVisible(false);
@@ -65,6 +67,7 @@ public class MainFrame extends JFrame implements ActionListener {
         jp2.add(password);
         jp2.add(password_textfield);
         jp2.add(connect);
+        jp2.add(disconnect);
         jp2.add(info);
 
         jp3 = new JPanel();
@@ -80,10 +83,11 @@ public class MainFrame extends JFrame implements ActionListener {
         jp4.setLayout(new BoxLayout(jp4,BoxLayout.X_AXIS));
 
         linenumbers = new JLabel("显示行数：");
-        linenumbers_textfield = new JTextField(10);
+        linenumbers_textfield = new JTextField(5);
 
 //        queryCondition = new JLabel("查询条件");
 //        queryConditionTextfield = new JTextField(10);
+
 
         query = new JButton("查看表数据");
         query.addActionListener(this);
@@ -105,11 +109,12 @@ public class MainFrame extends JFrame implements ActionListener {
         update.addActionListener(this);
         update.setEnabled(false);
 
+
+
+
         hide = new JButton("隐藏侧边框");
         hide.addActionListener(this);
 
-//        jp4.add(queryCondition);
-//        jp4.add(queryConditionTextfield);
         jp4.add(linenumbers);
         jp4.add(linenumbers_textfield);
         jp4.add(query);
@@ -169,6 +174,14 @@ public class MainFrame extends JFrame implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        if(e.getActionCommand().equals("断开连接")){
+            try {
+                DBUtils.disconnet();
+            } catch (SQLException e1) {
+                e1.printStackTrace();
+            }
+            display.append("\n断开连接\n=========================================\n");
+        }
         if(e.getActionCommand().equals("连接")){
             if(!ip_textfield.getText().equals("")
                     && !database_textfield.getText().equals("")
@@ -180,19 +193,16 @@ public class MainFrame extends JFrame implements ActionListener {
                             database_textfield.getText(),
                             username_textfield.getText(),
                             password_textfield.getText()))) {
-                        display.append("数据库连接失败！" + "\n=========================================");
+                        display.append("\n数据库连接失败！" + "\n=========================================");
                     }
                     else{
+
                         query.setEnabled(true);
                         add.setEnabled(true);
                         delete.setEnabled(true);
                         update.setEnabled(true);
                         queryCondition.setEnabled(true);
-                        java.util.List<String> tables_list = DBUtils.showTables(ip_textfield.getText(),
-                                                                                    database_textfield.getText(),
-                                                                                    username_textfield.getText(),
-                                                                                    password_textfield.getText()
-                                                                                    );
+                        java.util.List<String> tables_list = DBUtils.showTables();
                         show_combobox.removeAllItems();
                         for (int i = 0; i < tables_list.size(); i++) {
                             show_combobox.addItem(tables_list.get(i));
@@ -227,14 +237,186 @@ public class MainFrame extends JFrame implements ActionListener {
             cx_tiaojian_textarea.setLineWrap(true);
             JLabel lieming = new JLabel("需要显示的列名");
             JLabel tiaojian = new JLabel("查询限制条件");
+            fourQuery = new JLabel("特殊查询");
+            fourQueryCombobox = new JComboBox();
+            if(database_textfield.getText().equals("Project")){
+                fourQueryCombobox.addItem("无");
+                fourQueryCombobox.addItem("Minimum Cost Supplier Query,参数为TYPE，SIZE，REGION");
+                fourQueryCombobox.addItem("Order Priority Checking Query，参数为DATE");
+                fourQueryCombobox.addItem("Returned Item Reporting Query，参数为DATE");
+                fourQueryCombobox.addItem("Large Volume Customer Query，参数为QUANTITY");
+            }
+            T = new JLabel("TYPE（eg.BRASS）");
+            S = new JLabel("SIZE（1-50）");
+            R = new JLabel("REGION(eg.EUROPE)");
+            D = new JLabel("DATE(eg.1993-06-01)");
+            Q = new JLabel("QUANTITY(eg.300)");
+            T_textfield = new JTextField();
+            S_textfield = new JTextField();
+            R_textfield = new JTextField();
+            D_textfield = new JTextField();
+            Q_textfield = new JTextField();
+
+
             jp5.add(lieming);
             jp5.add(cx_columname);
             jp5.add(tiaojian);
             jp5.add(cx_tiaojian_textarea);
+            jp5.add(fourQuery);
+            jp5.add(fourQueryCombobox);
+            jp5.add(T);
+            jp5.add(T_textfield);
+            jp5.add(S);
+            jp5.add(S_textfield);
+            jp5.add(R);
+            jp5.add(R_textfield);
+            jp5.add(D);
+            jp5.add(D_textfield);
+            jp5.add(Q);
+            jp5.add(Q_textfield);
         }
         if(e.getActionCommand().equals("查询")){
-            String sql = "select "+cx_columname.getText()+" from "+show_combobox.getSelectedItem().toString()+" where "+cx_tiaojian_textarea.getText();
-            showdata(sql);
+            if(fourQueryCombobox.getSelectedItem().equals("无")){
+                String sql = "select "+cx_columname.getText()+" from "+show_combobox.getSelectedItem().toString()+" where "+cx_tiaojian_textarea.getText();
+                showdata(sql);
+            }
+            if(fourQueryCombobox.getSelectedItem().equals("Minimum Cost Supplier Query,参数为TYPE，SIZE，REGION")){
+                String sql = "select\n" +
+                        "s_acctbal,\n" +
+                        "s_name,\n" +
+                        "n_name,\n" +
+                        "p_partkey,\n" +
+                        "p_mfgr,\n" +
+                        "s_address,\n" +
+                        "s_phone,\n" +
+                        "s_comment\n" +
+                        "from\n" +
+                        "part,\n" +
+                        "supplier,\n" +
+                        "partsupp,\n" +
+                        "nation,\n" +
+                        "region\n" +
+                        "where\n" +
+                        "p_partkey = ps_partkey\n" +
+                        "and s_suppkey = ps_suppkey\n" +
+                        "and p_size = "+S_textfield.getText()+"\n" +
+                        "and p_type like '%"+T_textfield.getText()+"'\n" +
+                        "and s_nationkey = n_nationkey\n" +
+                        "and n_regionkey = r_regionkey\n" +
+                        "and r_name = '"+R_textfield.getText()+"'\n" +
+                        "and ps_supplycost = (\n" +
+                        "select\n" +
+                        "min(ps_supplycost)\n" +
+                        "from\n" +
+                        "partsupp, supplier,nation, region\n" +
+                        "where\n" +
+                        "p_partkey = ps_partkey\n" +
+                        "and s_suppkey = ps_suppkey\n" +
+                        "and s_nationkey = n_nationkey\n" +
+                        "and n_regionkey = r_regionkey\n" +
+                        "and r_name = '"+R_textfield.getText()+"'\n" +
+                        ")\n" +
+                        "order by\n" +
+                        "s_acctbal desc,\n" +
+                        "n_name,\n" +
+                        "s_name,\n" +
+                        "p_partkey\n";
+                showdata(sql);
+            }
+            if(fourQueryCombobox.getSelectedItem().equals("Order Priority Checking Query，参数为DATE")){
+                String sql = "select\n" +
+                        "o_orderpriority,\n" +
+                        "count(*) as order_count\n" +
+                        "from  orders\n" +
+                        "where\n" +
+                        "o_orderdate >= date '"+D_textfield.getText()+"'\n" +
+                        "and o_orderdate < date '"+D_textfield.getText()+"' + interval '3' month\n" +
+                        "and exists (\n" +
+                        "select\n" +
+                        "*\n" +
+                        "From\n" +
+                        "lineitem\n" +
+                        "where\n" +
+                        "l_orderkey = o_orderkey\n" +
+                        "and l_commitdate < l_receiptdate\n" +
+                        ")\n" +
+                        "group by\n" +
+                        "o_orderpriority\n" +
+                        "order by\n" +
+                        "o_orderpriority\n";
+                showdata(sql);
+            }
+            if(fourQueryCombobox.getSelectedItem().equals("Returned Item Reporting Query，参数为DATE")){
+                String sql = "select\n" +
+                        "c_custkey,\n" +
+                        "c_name,\n" +
+                        "sum(l_extendedprice * (1 - l_discount)) as revenue,\n" +
+                        "c_acctbal,\n" +
+                        "n_name,\n" +
+                        "c_address,\n" +
+                        "c_phone,\n" +
+                        "c_comment\n" +
+                        "from\n" +
+                        "customer,\n" +
+                        "orders,\n" +
+                        "lineitem,\n" +
+                        "nation\n" +
+                        "where\n" +
+                        "c_custkey = o_custkey\n" +
+                        "and l_orderkey = o_orderkey\n" +
+                        "and o_orderdate >= date '"+D_textfield.getText()+"'\n" +
+                        "and o_orderdate < date '"+D_textfield.getText()+"' + interval '3' month\n" +
+                        "and l_returnflag = 'R'\n" +
+                        "and c_nationkey = n_nationkey\n" +
+                        "group by\n" +
+                        "c_custkey,\n" +
+                        "c_name,\n" +
+                        "c_acctbal,\n" +
+                        "c_phone,\n" +
+                        "n_name,\n" +
+                        "c_address,\n" +
+                        "c_comment\n" +
+                        "order by\n" +
+                        "revenue desc\n";
+                showdata(sql);
+            }
+            if(fourQueryCombobox.getSelectedItem().equals("Large Volume Customer Query，参数为QUANTITY")){
+                String sql = "select\n" +
+                        "c_name,\n" +
+                        "c_custkey,\n" +
+                        "o_orderkey,\n" +
+                        "o_orderdate,\n" +
+                        "o_totalprice,\n" +
+                        "sum(l_quantity)\n" +
+                        "from\n" +
+                        "customer,\n" +
+                        "orders,\n" +
+                        "lineitem\n" +
+                        "where\n" +
+                        "o_orderkey in (\n" +
+                        "select\n" +
+                        "l_orderkey\n" +
+                        "from\n" +
+                        "lineitem\n" +
+                        "group by\n" +
+                        "l_orderkey having\n" +
+                        "sum(l_quantity) > "+Q_textfield.getText()+"\n" +
+                        ")\n" +
+                        "and c_custkey = o_custkey\n" +
+                        "and o_orderkey = l_orderkey\n" +
+                        "group by\n" +
+                        "c_name,\n" +
+                        "c_custkey,\n" +
+                        "o_orderkey,\n" +
+                        "o_orderdate,\n" +
+                        "o_totalprice\n" +
+                        "order by\n" +
+                        "o_totalprice desc,\n" +
+                        "o_orderdate;\n";
+                showdata(sql);
+            }
+
+
         }
         if(e.getActionCommand().equals("查看表数据")){
             showdata("select * from "+show_combobox.getSelectedItem().toString());
@@ -252,11 +434,7 @@ public class MainFrame extends JFrame implements ActionListener {
 //            jp5.setLayout(new BoxLayout(jp4,BoxLayout.Y_AXIS));
             List<String> columnNames = null;
             try {
-                columnNames = DBUtils.showColunmsNames(ip_textfield.getText(),
-                        database_textfield.getText(),
-                        username_textfield.getText(),
-                        password_textfield.getText(),
-                        show_combobox.getSelectedItem().toString());
+                columnNames = DBUtils.showColunmsNames(show_combobox.getSelectedItem().toString());
             } catch (SQLException e1) {
                 e1.printStackTrace();
             }
@@ -386,24 +564,18 @@ public class MainFrame extends JFrame implements ActionListener {
     }
     public void showdata(String sql){
         try {
-            int linenumbers = Integer.parseInt(linenumbers_textfield.getText());
+            int linenumbers;
+            if(linenumbers_textfield.getText().equals("")){
+                linenumbers = 0;
+            }
+            else {
+                linenumbers = Integer.parseInt(linenumbers_textfield.getText());
+            }
             java.util.List<String[]> list = null;
-            if(linenumbers >= 0) {
-                list = DBUtils.showTablesData(ip_textfield.getText(),
-                        database_textfield.getText(),
-                        username_textfield.getText(),
-                        password_textfield.getText(),
-                        show_combobox.getSelectedItem().toString(),
-                        linenumbers,sql);
-            }
-            else{
-                list = DBUtils.showTablesData(ip_textfield.getText(),
-                        database_textfield.getText(),
-                        username_textfield.getText(),
-                        password_textfield.getText(),
-                        show_combobox.getSelectedItem().toString(),
-                        -1,sql);
-            }
+            list = DBUtils.showTablesData(
+                    show_combobox.getSelectedItem().toString(),
+                    linenumbers,sql);
+
             display.append("\n=========================================\n");
             for(String[] s : list){
                 for(int i = 0;i< s.length;i++){
@@ -411,6 +583,7 @@ public class MainFrame extends JFrame implements ActionListener {
                 }
                 display.append("\n");
             }
+
         } catch (Exception e1) {
             display.append("\n============EXCEPTION=========================\n"+e1.toString()+"\n============EXCEPTION=========================\n");
         }
